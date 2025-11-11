@@ -19,17 +19,32 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'RN-SVGs',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="0.circle" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="svgs"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="1.circle" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="images"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="2.circle" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="webp"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="3.circle" color={color} />,
+        }}
+      />
+
     </Tabs>
   );
 }
