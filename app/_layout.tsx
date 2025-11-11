@@ -9,6 +9,8 @@ export const unstable_settings = {
   anchor: '(tabs)',
 };
 
+export const NUMBER_OF_IMAGES = 4000;
+
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 

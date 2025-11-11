@@ -1,67 +1,35 @@
 import { usePerformance } from '@/contexts/PerformanceContext';
+import { Image } from 'expo-image';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import Svg, { Circle, Ellipse, G, Line, Path, Rect } from 'react-native-svg';
 import { NUMBER_OF_IMAGES } from '../_layout';
 
-const COLORS = ['#E74C3C', '#3498DB', '#2ECC71', '#F39C12', '#9B59B6', '#1ABC9C', '#E67E22', '#34495E'];
+const IMAGES = [
+  require('../../assets/images/svg/1.svg'),
+  require('../../assets/images/svg/2.svg'),
+  require('../../assets/images/svg/3.svg'),
+  require('../../assets/images/svg/4.svg'),
+  require('../../assets/images/svg/5.svg'),
+];
 
-const ComplexSvg = ({ index, isLast, onLastLayout }: { index: number; isLast: boolean; onLastLayout?: () => void }) => {
-  const color1 = COLORS[index % COLORS.length];
-  const color2 = COLORS[(index + 1) % COLORS.length];
-  const type = index % 6;
+const SVGComponent = ({ index, isLast, onLastLayout }: { index: number; isLast: boolean; onLastLayout?: () => void }) => {
+  const imageSource = IMAGES[index % IMAGES.length];
 
   return (
     <View style={styles.item} onLayout={isLast ? onLastLayout : undefined}>
-      <Svg width="100" height="100" viewBox="0 0 100 100">
-        {type === 0 && (
-          <G>
-            <Circle cx="50" cy="50" r="45" fill={color1} opacity="0.8" />
-            <Circle cx="50" cy="50" r="30" fill={color2} opacity="0.9" />
-            <Circle cx="50" cy="50" r="15" fill="#fff" />
-          </G>
-        )}
-        {type === 1 && (
-          <G>
-            <Rect x="5" y="5" width="90" height="90" fill={color1} opacity="0.8" />
-            <Rect x="20" y="20" width="60" height="60" fill={color2} opacity="0.9" />
-            <Rect x="35" y="35" width="30" height="30" fill="#fff" />
-          </G>
-        )}
-        {type === 2 && (
-          <G>
-            <Path d="M50 10 L90 50 L50 90 L10 50 Z" fill={color1} />
-            <Ellipse cx="50" cy="50" rx="20" ry="30" fill={color2} />
-          </G>
-        )}
-        {type === 3 && (
-          <G>
-            <Path d="M10 50 Q 30 10, 50 50 T 90 50" stroke={color1} strokeWidth="8" fill="none" />
-            <Circle cx="10" cy="50" r="6" fill={color1} />
-            <Circle cx="50" cy="50" r="6" fill={color2} />
-            <Circle cx="90" cy="50" r="6" fill={color1} />
-          </G>
-        )}
-        {type === 4 && (
-          <G>
-            <Path d="M50 10 L90 40 L75 85 L25 85 L10 40 Z" fill={color1} />
-            <Path d="M50 30 L70 50 L60 75 L40 75 L30 50 Z" fill={color2} />
-          </G>
-        )}
-        {type === 5 && (
-          <G>
-            <Line x1="10" y1="10" x2="90" y2="90" stroke={color1} strokeWidth="4" />
-            <Line x1="90" y1="10" x2="10" y2="90" stroke={color2} strokeWidth="4" />
-            <Circle cx="50" cy="50" r="20" fill={color1} opacity="0.7" />
-          </G>
-        )}
-      </Svg>
+      <Image
+        source={imageSource}
+        style={styles.image}
+        contentFit="contain"
+        transition={200}
+        cachePolicy="memory-disk"
+      />
       <Text style={styles.label}>SVG #{index + 1}</Text>
     </View>
   );
 };
 
-export default function SvgsScreen() {
+export default function SVGFilesScreen() {
   const [count, setCount] = useState(NUMBER_OF_IMAGES);
   const [inputValue, setInputValue] = useState(NUMBER_OF_IMAGES.toString());
   const [renderTime, setRenderTime] = useState<number | null>(null);
@@ -95,13 +63,13 @@ export default function SvgsScreen() {
     }
   };
 
-  const items = Array.from({ length: count }, (_, idx) => ({ id: `complex-svg-${idx}`, index: idx }));
+  const items = Array.from({ length: count }, (_, idx) => ({ id: `svg-file-${idx}`, index: idx }));
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Complex SVG Graphics</Text>
-        <Text style={styles.subtitle}>{count} complex SVG compositions (direct render)</Text>
+        <Text style={styles.title}>SVG Files (Expo Image)</Text>
+        <Text style={styles.subtitle}>{count} SVG file images with expo-image (direct render)</Text>
         
         {renderTime !== null && (
           <View style={styles.performanceBox}>
@@ -127,7 +95,7 @@ export default function SvgsScreen() {
       <ScrollView contentContainerStyle={styles.list}>
         <View style={styles.grid}>
           {items.map((item, idx) => (
-            <ComplexSvg 
+            <SVGComponent 
               key={item.id} 
               index={item.index}
               isLast={idx === items.length - 1}
@@ -169,7 +137,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f9ff',
     borderRadius: 8,
     borderLeftWidth: 3,
-    borderLeftColor: '#3498DB',
+    borderLeftColor: '#E67E22',
   },
   performanceLabel: {
     fontSize: 14,
@@ -180,7 +148,7 @@ const styles = StyleSheet.create({
   performanceValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#3498DB',
+    color: '#E67E22',
   },
   controls: {
     flexDirection: 'row',
@@ -197,7 +165,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   button: {
-    backgroundColor: '#3498DB',
+    backgroundColor: '#E67E22',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
@@ -228,6 +196,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    height: 120,
+  },
+  image: {
+    width: 80,
+    height: 80,
   },
   label: {
     marginTop: 8,
@@ -236,3 +209,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
+

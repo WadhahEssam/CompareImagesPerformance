@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import { usePerformance } from '@/contexts/PerformanceContext';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Path, Polygon, Rect } from 'react-native-svg';
+import { NUMBER_OF_IMAGES } from '../_layout';
 
 const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
 
-const SvgComponent = ({ index }: { index: number }) => {
+const SvgComponent = ({ index, isLast, onLastLayout }: { index: number; isLast: boolean; onLastLayout?: () => void }) => {
   const color = COLORS[index % COLORS.length];
   const type = index % 4;
 
   return (
-    <View style={styles.item}>
+    <View style={styles.item} onLayout={isLast ? onLastLayout : undefined}>
       <Svg width="100" height="100" viewBox="0 0 100 100">
         {type === 0 && <Circle cx="50" cy="50" r="40" fill={color} />}
         {type === 1 && <Rect x="10" y="10" width="80" height="80" fill={color} />}
@@ -22,12 +24,35 @@ const SvgComponent = ({ index }: { index: number }) => {
 };
 
 export default function RNSvgScreen() {
-  const [count, setCount] = useState(300);
-  const [inputValue, setInputValue] = useState('300');
+  const [count, setCount] = useState(NUMBER_OF_IMAGES);
+  const [inputValue, setInputValue] = useState(NUMBER_OF_IMAGES.toString());
+  const [renderTime, setRenderTime] = useState<number | null>(null);
+  const [localStartTime, setLocalStartTime] = useState<number>(0);
+  const [hasRendered, setHasRendered] = useState(false);
+  const { startTime } = usePerformance();
+
+  useEffect(() => {
+    if (startTime > 0 && !hasRendered) {
+      setLocalStartTime(startTime);
+      setRenderTime(null);
+    }
+  }, [startTime, hasRendered]);
+
+  const handleLastElementLayout = useCallback(() => {
+    if (localStartTime > 0 && !hasRendered) {
+      const endTime = Date.now();
+      const duration = endTime - localStartTime;
+      setRenderTime(duration);
+      setHasRendered(true);
+    }
+  }, [localStartTime, hasRendered]);
 
   const handleUpdate = () => {
     const newCount = Number.parseInt(inputValue, 10);
     if (!Number.isNaN(newCount) && newCount > 0 && newCount <= 1000) {
+      setLocalStartTime(Date.now());
+      setRenderTime(null);
+      setHasRendered(false);
       setCount(newCount);
     }
   };
@@ -39,6 +64,13 @@ export default function RNSvgScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>React Native SVG Components</Text>
         <Text style={styles.subtitle}>{count} programmatic SVGs (direct render)</Text>
+        
+        {renderTime !== null && (
+          <View style={styles.performanceBox}>
+            <Text style={styles.performanceLabel}>⚡ Render Time:</Text>
+            <Text style={styles.performanceValue}>{renderTime}ms</Text>
+          </View>
+        )}
         
         <View style={styles.controls}>
           <TextInput
@@ -56,8 +88,13 @@ export default function RNSvgScreen() {
       
       <ScrollView contentContainerStyle={styles.list}>
         <View style={styles.grid}>
-          {items.map((item) => (
-            <SvgComponent key={item.id} index={item.index} />
+          {items.map((item, idx) => (
+            <SvgComponent 
+              key={item.id} 
+              index={item.index}
+              isLast={idx === items.length - 1}
+              onLastLayout={idx === items.length - 1 ? handleLastElementLayout : undefined}
+            />
           ))}
         </View>
       </ScrollView>
@@ -85,6 +122,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  performanceBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 10,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#4ECDC4',
+  },
+  performanceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginRight: 8,
+  },
+  performanceValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4ECDC4',
   },
   controls: {
     flexDirection: 'row',

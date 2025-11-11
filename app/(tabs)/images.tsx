@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import { usePerformance } from '@/contexts/PerformanceContext';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { NUMBER_OF_IMAGES } from '../_layout';
 
 const IMAGES = [
   require('../../assets/images/react-logo.png'),
@@ -8,13 +10,18 @@ const IMAGES = [
   require('../../assets/images/png/2.png'),
   require('../../assets/images/png/3.png'),
   require('../../assets/images/png/4.png'),
+  require('../../assets/images/png/5.png'),
+  require('../../assets/images/png/6.png'),
+  require('../../assets/images/png/7.png'),
+  require('../../assets/images/png/8.png'),
+  require('../../assets/images/png/9.png'),
 ];
 
-const ImageComponent = ({ index }: { index: number }) => {
+const ImageComponent = ({ index, isLast, onLastLayout }: { index: number; isLast: boolean; onLastLayout?: () => void }) => {
   const imageSource = IMAGES[index % IMAGES.length];
 
   return (
-    <View style={styles.item}>
+    <View style={styles.item} onLayout={isLast ? onLastLayout : undefined}>
       <Image
         source={imageSource}
         style={styles.image}
@@ -26,12 +33,35 @@ const ImageComponent = ({ index }: { index: number }) => {
 };
 
 export default function ImagesScreen() {
-  const [count, setCount] = useState(300);
-  const [inputValue, setInputValue] = useState('300');
+  const [count, setCount] = useState(NUMBER_OF_IMAGES);
+  const [inputValue, setInputValue] = useState(NUMBER_OF_IMAGES.toString());
+  const [renderTime, setRenderTime] = useState<number | null>(null);
+  const [localStartTime, setLocalStartTime] = useState<number>(0);
+  const [hasRendered, setHasRendered] = useState(false);
+  const { startTime } = usePerformance();
+
+  useEffect(() => {
+    if (startTime > 0 && !hasRendered) {
+      setLocalStartTime(startTime);
+      setRenderTime(null);
+    }
+  }, [startTime, hasRendered]);
+
+  const handleLastElementLayout = useCallback(() => {
+    if (localStartTime > 0 && !hasRendered) {
+      const endTime = Date.now();
+      const duration = endTime - localStartTime;
+      setRenderTime(duration);
+      setHasRendered(true);
+    }
+  }, [localStartTime, hasRendered]);
 
   const handleUpdate = () => {
     const newCount = Number.parseInt(inputValue, 10);
     if (!Number.isNaN(newCount) && newCount > 0 && newCount <= 1000) {
+      setLocalStartTime(Date.now());
+      setRenderTime(null);
+      setHasRendered(false);
       setCount(newCount);
     }
   };
@@ -43,6 +73,13 @@ export default function ImagesScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Standard PNG Images</Text>
         <Text style={styles.subtitle}>{count} standard image components (direct render)</Text>
+        
+        {renderTime !== null && (
+          <View style={styles.performanceBox}>
+            <Text style={styles.performanceLabel}>⚡ Render Time:</Text>
+            <Text style={styles.performanceValue}>{renderTime}ms</Text>
+          </View>
+        )}
         
         <View style={styles.controls}>
           <TextInput
@@ -60,8 +97,13 @@ export default function ImagesScreen() {
       
       <ScrollView contentContainerStyle={styles.list}>
         <View style={styles.grid}>
-          {items.map((item) => (
-            <ImageComponent key={item.id} index={item.index} />
+          {items.map((item, idx) => (
+            <ImageComponent 
+              key={item.id} 
+              index={item.index}
+              isLast={idx === items.length - 1}
+              onLastLayout={idx === items.length - 1 ? handleLastElementLayout : undefined}
+            />
           ))}
         </View>
       </ScrollView>
@@ -89,6 +131,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  performanceBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 10,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#2ECC71',
+  },
+  performanceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginRight: 8,
+  },
+  performanceValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2ECC71',
   },
   controls: {
     flexDirection: 'row',

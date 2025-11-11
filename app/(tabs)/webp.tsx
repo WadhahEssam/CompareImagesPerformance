@@ -1,17 +1,26 @@
+import { usePerformance } from '@/contexts/PerformanceContext';
 import { Image } from 'expo-image';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { NUMBER_OF_IMAGES } from '../_layout';
 
 const IMAGES = [
-  require('../../assets/images/react-logo.png'),
-  require('../../assets/images/partial-react-logo.png'),
+  require('../../assets/images/webp/1.webp'),
+  require('../../assets/images/webp/2.webp'),
+  require('../../assets/images/webp/3.webp'),
+  require('../../assets/images/webp/4.webp'),
+  require('../../assets/images/webp/5.webp'),
+  require('../../assets/images/webp/6.webp'),
+  require('../../assets/images/webp/7.webp'),
+  require('../../assets/images/webp/8.webp'),
+  require('../../assets/images/webp/9.webp'),
 ];
 
-const WebPComponent = ({ index }: { index: number }) => {
+const WebPComponent = ({ index, isLast, onLastLayout }: { index: number; isLast: boolean; onLastLayout?: () => void }) => {
   const imageSource = IMAGES[index % IMAGES.length];
 
   return (
-    <View style={styles.item}>
+    <View style={styles.item} onLayout={isLast ? onLastLayout : undefined}>
       <Image
         source={imageSource}
         style={styles.image}
@@ -25,12 +34,35 @@ const WebPComponent = ({ index }: { index: number }) => {
 };
 
 export default function WebPScreen() {
-  const [count, setCount] = useState(300);
-  const [inputValue, setInputValue] = useState('300');
+  const [count, setCount] = useState(NUMBER_OF_IMAGES);
+  const [inputValue, setInputValue] = useState(NUMBER_OF_IMAGES.toString());
+  const [renderTime, setRenderTime] = useState<number | null>(null);
+  const [localStartTime, setLocalStartTime] = useState<number>(0);
+  const [hasRendered, setHasRendered] = useState(false);
+  const { startTime } = usePerformance();
+
+  useEffect(() => {
+    if (startTime > 0 && !hasRendered) {
+      setLocalStartTime(startTime);
+      setRenderTime(null);
+    }
+  }, [startTime, hasRendered]);
+
+  const handleLastElementLayout = useCallback(() => {
+    if (localStartTime > 0 && !hasRendered) {
+      const endTime = Date.now();
+      const duration = endTime - localStartTime;
+      setRenderTime(duration);
+      setHasRendered(true);
+    }
+  }, [localStartTime, hasRendered]);
 
   const handleUpdate = () => {
     const newCount = Number.parseInt(inputValue, 10);
     if (!Number.isNaN(newCount) && newCount > 0 && newCount <= 1000) {
+      setLocalStartTime(Date.now());
+      setRenderTime(null);
+      setHasRendered(false);
       setCount(newCount);
     }
   };
@@ -42,6 +74,13 @@ export default function WebPScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Expo Image (WebP Optimized)</Text>
         <Text style={styles.subtitle}>{count} optimized images with expo-image (direct render)</Text>
+        
+        {renderTime !== null && (
+          <View style={styles.performanceBox}>
+            <Text style={styles.performanceLabel}>⚡ Render Time:</Text>
+            <Text style={styles.performanceValue}>{renderTime}ms</Text>
+          </View>
+        )}
         
         <View style={styles.controls}>
           <TextInput
@@ -59,8 +98,13 @@ export default function WebPScreen() {
       
       <ScrollView contentContainerStyle={styles.list}>
         <View style={styles.grid}>
-          {items.map((item) => (
-            <WebPComponent key={item.id} index={item.index} />
+          {items.map((item, idx) => (
+            <WebPComponent 
+              key={item.id} 
+              index={item.index}
+              isLast={idx === items.length - 1}
+              onLastLayout={idx === items.length - 1 ? handleLastElementLayout : undefined}
+            />
           ))}
         </View>
       </ScrollView>
@@ -88,6 +132,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  performanceBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 10,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#9B59B6',
+  },
+  performanceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginRight: 8,
+  },
+  performanceValue: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#9B59B6',
   },
   controls: {
     flexDirection: 'row',
