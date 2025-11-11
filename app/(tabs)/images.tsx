@@ -1,9 +1,13 @@
-import React from 'react';
-import { FlatList, Image, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 const IMAGES = [
   require('../../assets/images/react-logo.png'),
   require('../../assets/images/partial-react-logo.png'),
+  require('../../assets/images/png/1.png'),
+  require('../../assets/images/png/2.png'),
+  require('../../assets/images/png/3.png'),
+  require('../../assets/images/png/4.png'),
 ];
 
 const ImageComponent = ({ index }: { index: number }) => {
@@ -22,24 +26,45 @@ const ImageComponent = ({ index }: { index: number }) => {
 };
 
 export default function ImagesScreen() {
-  const data = Array.from({ length: 300 }, (_, i) => ({ id: i.toString(), index: i }));
+  const [count, setCount] = useState(300);
+  const [inputValue, setInputValue] = useState('300');
+
+  const handleUpdate = () => {
+    const newCount = Number.parseInt(inputValue, 10);
+    if (!Number.isNaN(newCount) && newCount > 0 && newCount <= 1000) {
+      setCount(newCount);
+    }
+  };
+
+  const items = Array.from({ length: count }, (_, idx) => ({ id: `image-${idx}`, index: idx }));
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Standard PNG Images</Text>
-        <Text style={styles.subtitle}>300 standard image components</Text>
+        <Text style={styles.subtitle}>{count} standard image components (direct render)</Text>
+        
+        <View style={styles.controls}>
+          <TextInput
+            style={styles.input}
+            value={inputValue}
+            onChangeText={setInputValue}
+            keyboardType="number-pad"
+            placeholder="Enter count"
+          />
+          <TouchableOpacity style={styles.button} onPress={handleUpdate}>
+            <Text style={styles.buttonText}>Update</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <FlatList
-        data={data}
-        renderItem={({ item }) => <ImageComponent index={item.index} />}
-        keyExtractor={(item) => item.id}
-        numColumns={3}
-        contentContainerStyle={styles.list}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-      />
+      
+      <ScrollView contentContainerStyle={styles.list}>
+        <View style={styles.grid}>
+          {items.map((item) => (
+            <ImageComponent key={item.id} index={item.index} />
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -65,12 +90,42 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
+  controls: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 10,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  button: {
+    backgroundColor: '#2ECC71',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   list: {
     padding: 10,
   },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
   item: {
-    flex: 1,
-    margin: 5,
+    width: '31%',
+    margin: '1%',
     backgroundColor: '#fff',
     borderRadius: 8,
     padding: 10,
